@@ -1,0 +1,2 @@
+# Keep Clippy's analysis aligned with the repository's pinned compiler.
+msrv = "1.97.1"

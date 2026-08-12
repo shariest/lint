@@ -1,0 +1,41 @@
+// Canonical Java lint policy. The root build.gradle only bootstraps the
+// Spotless and Error Prone plugins, then applies this file.
+
+dependencies {
+    errorprone 'com.google.errorprone:error_prone_core:2.50.0'
+}
+
+spotless {
+    java {
+        target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+        targetExclude 'src/main/generated/**', 'build/**'
+        palantirJavaFormat('2.96.0')
+        formatAnnotations()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.errorprone.disableWarningsInGeneratedCode = true
+    options.errorprone.excludedPaths = '.*/(?:build/generated|src/main/generated)/.*'
+    options.errorprone.error('WildcardImport')
+    options.compilerArgs.addAll(['-Xlint:all,-processing', '-Werror'])
+}
+
+tasks.named('compileJava') {
+    dependsOn tasks.named('spotlessJavaCheck')
+}
+
+tasks.register('lintJava') {
+    group = 'verification'
+    description = 'Checks first-party Java formatting and Error Prone findings.'
+    dependsOn tasks.named('spotlessJavaCheck')
+    dependsOn tasks.named('compileJava')
+    dependsOn tasks.named('compileTestJava')
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('lintJava')
+}
