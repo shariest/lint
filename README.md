@@ -141,6 +141,9 @@ export default createFrontendEslintConfig({
 })
 ```
 
+Node 런타임 백엔드는 같은 canonical 파일의 `createNodeEslintConfig`를 쓴다. React 플러그인이
+빠지고 검사 대상만 프로젝트가 주입하며, 배선 예시는 [typescript.md](typescript.md)에 있다.
+
 같은 디렉터리의 `frontend/.prettierrc.cjs`는 IDE 자동 탐색용 adapter이며, CLI는 canonical
 JSON을 `--config`로 직접 읽는다.
 

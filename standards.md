@@ -28,7 +28,7 @@ Markdown 문서는 기준을 설명하고, 실제 도구가 읽는 설정은 모
 | 언어 | canonical 설정 | 프로젝트 연결 방식 |
 | --- | --- | --- |
 | Java | `config/java/lint.gradle` | 루트 `build.gradle`의 `apply from` |
-| TypeScript | `config/typescript/eslint.config.mjs`, `prettier.json` | `frontend/eslint.config.js` dependency adapter, `.prettierrc.cjs` IDE adapter, pnpm의 `--config` |
+| TypeScript | `config/typescript/eslint.config.mjs`, `prettier.json` | 각 TS 프로젝트의 `eslint.config.js` dependency adapter(프론트엔드 factory / Node factory), `.prettierrc.cjs` IDE adapter, pnpm의 `--config` |
 | Python | `config/python/pyproject.toml`, `requirements.txt` | `scripts/lint.sh`와 Docker의 `--config`, `--config-file`, `-r` |
 | Rust | `config/rust/{rust-toolchain,rustfmt,clippy}.toml` | 루트의 같은 이름 파일이 canonical 파일을 가리키는 상대 symlink |
 
@@ -129,6 +129,10 @@ formatter, lint, type check는 생략하지 않는다.
 기존 프로젝트이므로 무조건 최신 버전으로 올리지 않는다. 공식 release와 Java 25,
 TypeScript 6, Python 3.9 runtime, Rust MSRV 호환성을 확인하고 한 번에 한 도구군씩
 업데이트한다.
+
+TS 7로 빌드하는 소비 저장소는 `typescript`를 `@typescript/typescript6`로 alias하고 `tsc`만
+TS 7 native로 받는다. typescript-eslint가 아직 TS 7 API를 지원하지 않기 때문이며, lint가
+읽는 언어 버전은 그대로 TS 6이다. 자세한 배선은 [TypeScript](typescript.md)에 있다.
 
 ## 세부 문서
 
