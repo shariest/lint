@@ -82,6 +82,13 @@ bash install.sh -u http://192.168.220.222:8089/ploonet/lint.git -p docs/lint
 언어를 지정하지 않으면 `build.gradle`, `<target>/package.json`, `*.py`, `Cargo.toml` 존재
 여부로 감지한다.
 
+first-party Rust 소스가 아직 없어도 toolchain을 미리 고정하려면 Rust를 명시한다. `Cargo.toml`이
+없으면 자동 감지에서 빠지기 때문이다.
+
+```bash
+./docs/lint/scripts/install.sh rust
+```
+
 ## 언어별 연결 방식
 
 `install.sh`가 만드는 파일과 동일한 내용을 직접 만들어도 된다. 어느 쪽이든 규칙 자체는
