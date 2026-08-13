@@ -21,6 +21,9 @@ tasks.withType(JavaCompile).configureEach {
     options.errorprone.disableWarningsInGeneratedCode = true
     options.errorprone.excludedPaths = '.*/(?:build/generated|src/main/generated)/.*'
     options.errorprone.error('WildcardImport')
+    // 한국어 식별자 허용 — 테스트 메서드명을 한글 문장으로 쓰는 저장소가 있다.
+    // 동형이의 문자 혼동 위험보다 테스트 의도가 그대로 읽히는 이점이 크다.
+    options.errorprone.disable('UnicodeInCode')
     options.compilerArgs.addAll(['-Xlint:all,-processing', '-Werror'])
 }
 

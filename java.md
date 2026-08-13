@@ -35,6 +35,11 @@ Lombok, MapStruct 등 annotation processor가 정상 동작하면서 내는 proc
 warning만 `-Xlint:-processing`으로 제외한다. generated 경로는 Error Prone과 formatter에서
 제외하지만, 생성기를 직접 작성한 first-party Java 코드는 검사한다.
 
+`UnicodeInCode`는 표준에서 끈다. 테스트 메서드명을 한글 문장으로 쓰는 저장소가 있고
+(`void 서비스가_던진_예외는_INTERNAL로_감싼다()`), 그 이름 자체가 테스트 문서다.
+동형이의 유니코드 문자로 인한 혼동 위험보다 의도가 그대로 읽히는 이점이 크다고 봤다.
+주석·문자열의 한글은 이 검사 대상이 아니므로 원래 문제되지 않는다.
+
 ## 사용법
 
 ```bash
