@@ -1,24 +1,20 @@
-# Python 3.12 runtime profile.
+# Python 3.14 runtime profile.
 #
-# 기본 프로파일(pyproject.toml)은 SENA 의 Corretto runtime 인 Python 3.9 를 분석
-# target 으로 삼는다. runtime 이 3.10 이상인 소비 저장소는 그 target 으로 분석해야
-# `X | Y` union 같은 정상 문법이 syntax error 로 잡히지 않는다.
-# standards.md 의 "runtime 을 3.10 이상으로 올릴 때 이 결정을 다시 검토한다" 에 따른
-# 추가 프로파일이며, 기본 프로파일은 그대로 둔다.
+# 기본 프로파일(pyproject.toml)과 분석 target 은 같다(py314). 이 파일은 소비
+# 저장소의 framework 경계 설정만 덮어쓴다.
 #
-# 사용처: document-parser (python-service, Python 3.12 FastAPI)
+# 사용처: document-parser (python-service, Python 3.14 FastAPI)
 #
 # rule family, line-length, RUF001~003 제외 정책은 기본 프로파일을 그대로 상속한다.
-# 이 파일은 분석 target 과 FastAPI 경계 설정만 덮어쓴다.
 
 [project]
-name = "sena-python-tools-py312"
+name = "sena-python-tools-py314"
 version = "0.0.0"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 
 [tool.ruff]
 extend = "../pyproject.toml"
-target-version = "py312"
+target-version = "py314"
 
 [tool.ruff.lint.per-file-ignores]
 # 테스트 double 의 인자 이름은 계약이다.
@@ -45,10 +41,10 @@ extend-immutable-calls = [
     "fastapi.Security",
 ]
 
-# mypy 는 설정 상속이 없으므로 기본 프로파일의 [tool.mypy] 를 그대로 옮기고
-# python_version 만 3.12 로 바꾼다. 기본 프로파일이 바뀌면 이 블록도 같이 갱신한다.
+# mypy 는 설정 상속이 없으므로 기본 프로파일의 [tool.mypy] 를 그대로 옮긴다.
+# 기본 프로파일이 바뀌면 이 블록도 같이 갱신한다.
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.14"
 strict = true
 show_error_codes = true
 show_error_context = true

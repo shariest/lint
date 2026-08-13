@@ -25,21 +25,25 @@ mypy 2.3.0, python_version 3.14, strict
 `docs/lint/config/python/pyproject.toml`과 `requirements.txt`다. 설정 파일의 위치와 무관하게
 동작하도록 검사 대상 네 파일은 `scripts/lint.sh`가 명시적으로 전달한다.
 
-## runtime 프로파일
+## 프로파일
 
-runtime을 아직 3.14로 올리지 못한 소비 저장소를 위해 분석 target만 낮춘 프로파일을
-`config/python/<target>/pyproject.toml`에 둔다. rule family·line-length·format 정책은
-`[tool.ruff] extend`로 기본 프로파일을 그대로 상속하고, 분석 target과 해당 저장소의
-framework 경계만 덮어쓴다. 기본 프로파일은 손대지 않으므로 다른 저장소에 영향이 없다.
+소비 저장소가 코드로 회피할 수 없는 framework 경계를 갖거나 분석 target이 다르면
+`config/python/<name>/pyproject.toml`에 프로파일을 둔다. rule family·line-length·format
+정책은 `[tool.ruff] extend`로 기본 프로파일을 그대로 상속하고 필요한 항목만 덮어쓴다.
+기본 프로파일은 손대지 않으므로 다른 저장소에 영향이 없다.
 
-| 프로파일 | 분석 target | 사용처 |
-| --- | --- | --- |
-| `config/python/pyproject.toml` | 3.14 | SENA |
-| `config/python/py312/pyproject.toml` | 3.12 | document-parser (`python-service`) |
+| 프로파일 | 분석 target | 사용처 | 덮어쓰는 항목 |
+| --- | --- | --- | --- |
+| `config/python/pyproject.toml` | 3.14 | SENA | — |
+| `config/python/py314/pyproject.toml` | 3.14 | document-parser (`python-service`) | FastAPI 인자 선언, 테스트 double의 ARG |
 
-프로파일은 runtime을 올릴 때까지의 한시적 장치다. 소비 저장소의 runtime이 3.14가 되면
-기본 프로파일로 전환하고 해당 파일을 지운다. 새 프로파일을 추가할 때는 이 표와
-`[tool.mypy]` 블록(mypy는 설정 상속이 없어 복제해야 한다)을 같은 변경에서 갱신한다.
+분석 target은 소비 저장소가 코드를 **실제로 실행하는** Python 버전과 같아야 한다.
+`UP` rule이 그 버전 전용 문법으로 코드를 다시 쓰기 때문에, target이 runtime보다 높으면
+lint는 통과하면서 runtime에서 `SyntaxError`가 난다. 반대로 낮으면 통과는 하지만 표준이
+요구하는 최신 문법으로 올라가지 않는다.
+
+새 프로파일을 추가할 때는 이 표와 `[tool.mypy]` 블록(mypy는 설정 상속이 없어 복제해야
+한다)을 같은 변경에서 갱신한다.
 
 ## blocking 규칙
 
