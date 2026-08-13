@@ -1,0 +1,66 @@
+# Python 3.12 runtime profile.
+#
+# 기본 프로파일(pyproject.toml)은 SENA 의 Corretto runtime 인 Python 3.9 를 분석
+# target 으로 삼는다. runtime 이 3.10 이상인 소비 저장소는 그 target 으로 분석해야
+# `X | Y` union 같은 정상 문법이 syntax error 로 잡히지 않는다.
+# standards.md 의 "runtime 을 3.10 이상으로 올릴 때 이 결정을 다시 검토한다" 에 따른
+# 추가 프로파일이며, 기본 프로파일은 그대로 둔다.
+#
+# 사용처: document-parser (python-service, Python 3.12 FastAPI)
+#
+# rule family, line-length, RUF001~003 제외 정책은 기본 프로파일을 그대로 상속한다.
+# 이 파일은 분석 target 과 FastAPI 경계 설정만 덮어쓴다.
+
+[project]
+name = "sena-python-tools-py312"
+version = "0.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+extend = "../pyproject.toml"
+target-version = "py312"
+
+[tool.ruff.lint.per-file-ignores]
+# 테스트 double 의 인자 이름은 계약이다.
+#   - pytest 는 fixture 를 인자 "이름"으로 주입한다 (monkeypatch, tmp_path …)
+#   - monkeypatch 로 갈아끼우는 stub 은 원본 함수가 keyword 로 호출되는 인자
+#     이름을 그대로 가져야 한다 (client.post(json=...) 등)
+# 따라서 미사용 인자를 `_` prefix 로 바꿔 회피할 수 없다. 검사 자체는 테스트
+# 코드에도 적용하되(standards.md 원칙 4), ARG 계열만 테스트 경로에서 제외한다.
+"**/tests/**" = ["ARG001", "ARG002", "ARG005"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI 는 인자 선언 자체를 File()/Form()/Query()/Depends() 호출로 표현한다.
+# 이들은 값을 mutate 하지 않는 선언용 marker 라 B008(function-call-in-default-argument)
+# 의 위험(가변 기본값 공유)에 해당하지 않는다. 코드로 회피할 수 없는 framework
+# 경계이므로 immutable call 로 등록한다.
+extend-immutable-calls = [
+    "fastapi.Body",
+    "fastapi.Depends",
+    "fastapi.File",
+    "fastapi.Form",
+    "fastapi.Header",
+    "fastapi.Path",
+    "fastapi.Query",
+    "fastapi.Security",
+]
+
+# mypy 는 설정 상속이 없으므로 기본 프로파일의 [tool.mypy] 를 그대로 옮기고
+# python_version 만 3.12 로 바꾼다. 기본 프로파일이 바뀌면 이 블록도 같이 갱신한다.
+[tool.mypy]
+python_version = "3.12"
+strict = true
+show_error_codes = true
+show_error_context = true
+pretty = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["pptx", "pptx.*"]
+ignore_missing_imports = true
+
+# stub 을 배포하지 않거나 lint 환경에 설치하지 않는 third-party 경계.
+# 기본 프로파일의 pptx override 와 같은 성격이다.
+[[tool.mypy.overrides]]
+module = ["bs4", "httpx"]
+ignore_missing_imports = true
