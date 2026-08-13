@@ -1,13 +1,13 @@
 [project]
 name = "sena-python-tools"
 version = "0.0.0"
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 
 # Source ownership and the exact four-file allowlist live in
 # scripts/check-source-inventory.sh and scripts/lint.sh. Keeping scope out of
 # this file makes the canonical config independent of its docs/lint location.
 [tool.ruff]
-target-version = "py39"
+target-version = "py314"
 line-length = 88
 
 [tool.ruff.format]
@@ -40,7 +40,7 @@ ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.14"
 strict = true
 show_error_codes = true
 show_error_context = true

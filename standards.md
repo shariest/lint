@@ -85,10 +85,11 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-targets --all-features
 ```
 
-Python 검사 환경은 `scripts/lint.sh`가 Python 3.10 이상과 `config/python/requirements.txt`에 직접
-고정한 Ruff/mypy 버전으로 `.lint-venv`에 구성하되, 코드는 실제 runtime인 Python 3.9를
-target으로 분석한다. transitive dependency까지 hash-lock한 환경은 아니므로 lock 갱신 시
-`pip check`와 전체 lint를 다시 검증한다.
+Python 검사 환경은 `scripts/lint.sh`가 Python 3.14와 `config/python/requirements.txt`에 직접
+고정한 Ruff/mypy 버전으로 `.lint-venv`에 구성하고, 코드도 같은 Python 3.14를 target으로
+분석한다. 채택 저장소의 실제 runtime이 3.14보다 낮으면 `UP` rule이 요구하는 3.10+ 문법이
+runtime에서 깨지므로, runtime을 먼저 올린 뒤 표준을 채택한다. transitive dependency까지
+hash-lock한 환경은 아니므로 lock 갱신 시 `pip check`와 전체 lint를 다시 검증한다.
 고정 allowlist 밖의 새 Python source는 검사 대상과 Docker stage를 함께 갱신할 때까지 실패한다.
 Rust first-party 소스가 아직 없으므로 Rust 검사는 현재 명시적인 no-op이다. first-party
 `*.rs`가 추가되면 root Cargo workspace manifest 및 clean compile dep-info 입력 소속 없이
@@ -123,11 +124,11 @@ formatter, lint, type check는 생략하지 않는다.
 | Prettier | `3.9.6` |
 | pnpm | `10.32.1` |
 | Ruff | `0.16.2` |
-| mypy | `1.20.0` |
+| mypy | `2.3.0` |
 | Rust | `1.97.1`, edition/style edition 2024 |
 
 기존 프로젝트이므로 무조건 최신 버전으로 올리지 않는다. 공식 release와 Java 25,
-TypeScript 6, Python 3.9 runtime, Rust MSRV 호환성을 확인하고 한 번에 한 도구군씩
+TypeScript 6, Python 3.14 runtime, Rust MSRV 호환성을 확인하고 한 번에 한 도구군씩
 업데이트한다.
 
 TS 7로 빌드하는 소비 저장소는 `typescript`를 `@typescript/typescript6`로 alias하고 `tsc`만

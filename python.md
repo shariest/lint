@@ -7,15 +7,19 @@ Google Python Style의 가독성·명시성 원칙과 OpenAI·Anthropic Python S
 조합을 현재 네 개 first-party Python 파일에 맞게 적용한다.
 
 ```text
-runtime/target: Python 3.9
-Ruff 0.16.2, target-version py39, line-length 88
-mypy 1.20.0, python_version 3.9, strict
+runtime/target: Python 3.14
+Ruff 0.16.2, target-version py314, line-length 88
+mypy 2.3.0, python_version 3.14, strict
 ```
 
-mypy 2.x는 Python 3.9 분석 target을 지원하지 않으므로, 현재 Corretto runtime이 제공하는
-Python 3.9를 유지하는 동안 호환되는 최신 1.x인 1.20.0을 고정한다. mypy 1.20 자체는
-Python 3.10 이상에서 실행하고, `python_version = 3.9`로 runtime 코드를 분석한다. runtime을
-3.10 이상으로 올릴 때 이 결정을 다시 검토한다.
+표준은 현재 stable 최신인 Python 3.14를 분석 target으로 고정한다. mypy 2.x는 3.10 이상
+분석 target만 받으므로, 3.14 target에서는 최신 2.x 라인을 그대로 쓸 수 있다. lint 환경과
+분석 target이 같은 버전이라 `.lint-venv`를 만드는 interpreter가 곧 target 검증이 된다.
+
+이 표준을 채택하는 저장소는 코드를 **실제로 실행하는** 환경도 Python 3.14여야 한다.
+`target-version = py314`는 `UP` rule이 `Optional[X]`를 `X | None`처럼 3.10+ 전용 문법으로
+바꾸도록 요구하기 때문에, runtime이 더 낮으면 lint는 통과하면서 import 시점에
+`TypeError`가 난다. runtime을 먼저 올리고 submodule pointer를 옮긴다.
 
 실행 설정과 직접 dependency pin의 단일 원본은 각각
 `docs/lint/config/python/pyproject.toml`과 `requirements.txt`다. 설정 파일의 위치와 무관하게
@@ -51,7 +55,7 @@ Docker lint stage의 allowlist를 같은 변경에서 갱신한다.
 ## 사용법
 
 ```bash
-python3.10 -m venv .lint-venv
+python3.14 -m venv .lint-venv
 ./.lint-venv/bin/pip install -r docs/lint/config/python/requirements.txt
 ./.lint-venv/bin/ruff format \
   --config docs/lint/config/python/pyproject.toml --check <sources>

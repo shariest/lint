@@ -210,15 +210,15 @@ EOF
 install_python() {
     info 'python'
     local py=''
-    for cand in python3.13 python3.12 python3.11 python3.10 python3; do
+    for cand in python3.14 python3; do
         command -v "$cand" >/dev/null 2>&1 || continue
-        if "$cand" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+        if "$cand" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 14) else 1)' 2>/dev/null; then
             py=$cand
             break
         fi
     done
     if [ -z "$py" ]; then
-        warn 'no Python 3.10+ interpreter found; create .lint-venv manually'
+        warn 'no Python 3.14+ interpreter found; create .lint-venv manually'
         return
     fi
     if [ -x .lint-venv/bin/ruff ] && [ "$FORCE" -ne 1 ]; then

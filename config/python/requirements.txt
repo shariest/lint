@@ -1,5 +1,5 @@
-# The checked code targets Python 3.9. The lint environment requires Python 3.10+.
-# mypy 1.20.0 is the newest release that can still analyze Python 3.9 code;
-# mypy 2.x requires a Python 3.10+ analysis target.
+# The checked code targets Python 3.14, and the lint environment runs on the
+# same version. mypy 2.x only accepts a Python 3.10+ analysis target, so the
+# 3.14 target lets the standard track the current mypy 2.x line.
 ruff==0.16.2
-mypy==1.20.0
+mypy==2.3.0

@@ -164,7 +164,7 @@ pnpm --dir frontend add -D eslint @eslint/js typescript-eslint eslint-config-pre
 설정 파일 위치와 무관하게 동작하도록 검사 대상은 명령에서 명시적으로 전달한다.
 
 ```bash
-python3.10 -m venv .lint-venv
+python3.14 -m venv .lint-venv
 ./.lint-venv/bin/pip install -r docs/lint/config/python/requirements.txt
 ./.lint-venv/bin/ruff format --config docs/lint/config/python/pyproject.toml --check <sources>
 ./.lint-venv/bin/ruff check  --config docs/lint/config/python/pyproject.toml <sources>
