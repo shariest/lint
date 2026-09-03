@@ -42,7 +42,7 @@ Markdown 문서는 기준을 설명하고, 실제 도구가 읽는 설정은 모
 | --- | --- | --- |
 | Java | `src/main/java/**`, `src/test/java/**` | `src/main/generated/**`, `build/**` |
 | TypeScript | `frontend/src/**/*.{ts,tsx,mts,cts}`, `frontend/vite.config.ts` | `frontend/{node_modules,dist}/**` |
-| Python | `tool-runner/runner.py`, `tool-runner/tools/_example.py`, `docs/build_pptx.py`, `docs/build_architecture.py` | 런타임 생성 `tool-runner/tools/**` 중 `_example.py` 외 파일, cache/build 산출물 |
+| Python | `tool-runner/runner.py`, `tool-runner/tools/_example.py`, `docs/build_pptx.py`, `docs/build_architecture.py`, `src/main/resources/extension-bundle/bundle_server.py` | 런타임 생성 `tool-runner/tools/**` 중 `_example.py` 외 파일, cache/build 산출물 |
 | Rust | 앞으로 추가되는 first-party Cargo workspace의 추적 중인 `*.rs` | `modules/**`, `vendor/**`, `target/**`, generated 코드 |
 
 `modules/**`는 별도 저장소인 Git submodule이므로 이 저장소의 lint가 검사하거나
