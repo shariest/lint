@@ -56,6 +56,11 @@ warn_unused_configs = true
 module = ["pptx", "pptx.*"]
 ignore_missing_imports = true
 
+# Playwright는 백엔드 이미지(런타임)에만 설치된다 — lint 환경은 설치 없이 소스만 검사한다.
+[[tool.mypy.overrides]]
+module = ["playwright", "playwright.*"]
+ignore_missing_imports = true
+
 # Extension runtime dependencies live only inside the extension container image;
 # the lint environment checks the source without installing a Flask stack.
 [[tool.mypy.overrides]]
