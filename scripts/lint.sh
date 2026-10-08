@@ -19,7 +19,7 @@ Usage: lint.sh [-t DIR] [-s FILE]... [LANG...]
             omitted: tracked and untracked *.py / *.pyi are collected
   -h        show this help
 
-  LANG      java | kotlin | typescript | python | rust
+  LANG      java | kotlin | android | typescript | python | rust
             omitted: detected from the repository layout
 
 Run from anywhere inside the consuming Git repository.
@@ -49,7 +49,7 @@ shift $((OPTIND - 1))
 
 for lang in "$@"; do
     case "$lang" in
-        java | kotlin | typescript | python | rust) LANGS+=("$lang") ;;
+        java | kotlin | android | typescript | python | rust) LANGS+=("$lang") ;;
         *) die "unknown language: $lang" ;;
     esac
 done
@@ -74,13 +74,19 @@ lint_java() {
         skip 'no ./gradlew'
         return
     fi
-    ./gradlew --console=plain lintJava
+    ./gradlew --console=plain --init-script "$CONFIG_DIR/gradle/lint.init.gradle" lintJava
 }
 
 lint_kotlin() {
     info 'Kotlin: Spotless + ktlint + compiler warnings as errors'
     [ -x ./gradlew ] || die 'Kotlin requires an executable ./gradlew in the repository root'
-    ./gradlew --console=plain --init-script "$CONFIG_DIR/kotlin/lint.init.gradle" lintKotlin
+    ./gradlew --console=plain --init-script "$CONFIG_DIR/gradle/lint.init.gradle" lintKotlin
+}
+
+lint_android() {
+    info 'Android: Android Lint + Java/Kotlin gates'
+    [ -x ./gradlew ] || die 'Android requires an executable ./gradlew in the repository root'
+    ./gradlew --console=plain --init-script "$CONFIG_DIR/gradle/lint.init.gradle" lintAndroid
 }
 
 lint_typescript() {

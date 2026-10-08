@@ -15,6 +15,8 @@ allWarningsAsErrors = true, suppressWarnings = false
 JDK 17+, Gradle 8+, Kotlin Gradle plugin 2.x 프로젝트가 대상이다. compiler 버전, JVM target,
 toolchain은 소비 프로젝트가 정한다. Kotlin DSL(`build.gradle.kts`)과 Groovy DSL,
 루트가 집계만 담당하는 멀티모듈 구조를 지원한다.
+Android 앱·라이브러리에는 [Android 정책](android.md)도 함께 적용된다. AGP 9의 내장 Kotlin은
+별도의 Kotlin Android plugin 선언 없이 사용하며, Android의 Java 검사에는 JDK 21+가 필요하다.
 
 ## 설치 후 일반 빌드로 실행
 
@@ -34,6 +36,7 @@ settings와 submodule을 함께 커밋하면 다른 개발자는 `git clone --re
 적용한다. 해당 모듈의 Kotlin compile task를 `lintKotlin`에 연결하고 `check`/`build`에서
 실행한다. 테스트 컴파일도 포함하며, 컴파일 전에 formatter check를 실행한다.
 Java 소스가 있는 모듈에는 기존 Java 정책과 Error Prone도 자동으로 적용한다.
+Android의 `lintKotlin`은 모든 활성 variant의 Android Lint도 실행한다.
 
 ```bash
 ./gradlew build

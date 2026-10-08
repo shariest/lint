@@ -4,7 +4,7 @@
 
 조사 기준일: 2026-08-12
 
-이 디렉터리는 SENA가 직접 소유하고 수정하는 Java, Kotlin, TypeScript, Python, Rust 코드의
+이 디렉터리는 SENA가 직접 소유하고 수정하는 Java, Kotlin, Android, TypeScript, Python, Rust 코드의
 정적 검사 표준을 정의한다. 공개된 Google 스타일 가이드와 OpenAI·Anthropic의 공식
 오픈 소스 저장소 설정을 참고하되, 각 회사의 비공개 사내 표준이라고 추정하지 않는다.
 SENA의 기존 구조, 런타임 버전, 코드 관례와 충돌하는 항목은 근거를 남기고 조정한다.
@@ -31,6 +31,7 @@ Markdown 문서는 기준을 설명하고, 실제 도구가 읽는 설정은 모
 | --- | --- | --- |
 | Java | `config/java/lint.gradle` | `install.sh`가 Gradle settings에 공통 정책을 자동 연결. 기존 build script 연결도 지원 |
 | Kotlin | `config/kotlin/lint.gradle`, `.editorconfig` | 같은 Gradle settings 연결로 모듈마다 `check`/`build`에 자동 적용 |
+| Android | `config/android/lint.gradle` + 기존 Java/Kotlin 설정 | application/library plugin 감지, 모든 활성 variant의 Android Lint를 `lintAndroid`·언어 gate·`check`/`build`에 연결 |
 | TypeScript | `config/typescript/eslint.config.mjs`, `prettier.json` | 각 TS 프로젝트의 `eslint.config.js` dependency adapter(프론트엔드 factory / Node factory), `.prettierrc.cjs` IDE adapter, pnpm의 `--config` |
 | Python | `config/python/pyproject.toml`, `requirements.txt` | `scripts/lint.sh`와 Docker의 `--config`, `--config-file`, `-r` |
 | Rust | `config/rust/{rust-toolchain,rustfmt,clippy}.toml` | 루트의 같은 이름 파일이 canonical 파일을 가리키는 상대 symlink |
@@ -45,6 +46,7 @@ Markdown 문서는 기준을 설명하고, 실제 도구가 읽는 설정은 모
 | --- | --- | --- |
 | Java | `src/main/java/**`, `src/test/java/**` | `src/main/generated/**`, `build/**` |
 | Kotlin | Git tracked/untracked `*.kt`, `*.kts`; main/test 및 하위 프로젝트 compilation | Git submodule, ignore된 untracked 파일, `build`, `.gradle`, `.kotlin`, `node_modules`, `vendor`, `generated` 디렉터리 |
+| Android | 모든 활성 variant의 코드·manifest·resource·테스트, Git tracked/untracked Java/Kotlin 파일 | formatter의 Git/generated 제외는 Kotlin과 동일; Android Lint는 AGP의 source model 사용 |
 | TypeScript | `frontend/src/**/*.{ts,tsx,mts,cts}`, `frontend/vite.config.ts` | `frontend/{node_modules,dist}/**` |
 | Python | `tool-runner/runner.py`, `tool-runner/tools/_example.py`, `docs/build_pptx.py`, `docs/build_architecture.py`, `src/main/resources/extension-bundle/bundle_server.py` | 런타임 생성 `tool-runner/tools/**` 중 `_example.py` 외 파일, cache/build 산출물 |
 | Rust | 앞으로 추가되는 first-party Cargo workspace의 추적 중인 `*.rs` | `modules/**`, `vendor/**`, `target/**`, generated 코드 |
@@ -81,6 +83,7 @@ Markdown 문서는 기준을 설명하고, 실제 도구가 읽는 설정은 모
 ```bash
 ./gradlew lintJava
 ./docs/lint/scripts/lint.sh kotlin
+./docs/lint/scripts/lint.sh android
 pnpm --dir frontend run lint
 ./.lint-venv/bin/ruff format --config docs/lint/config/python/pyproject.toml --check <sources>
 ./.lint-venv/bin/ruff check --config docs/lint/config/python/pyproject.toml <sources>
@@ -107,6 +110,9 @@ Rust first-party 소스가 아직 없으므로 Rust 검사는 현재 명시적�
 - Kotlin은 `install.sh`로 한 번 연결하면 일반 `./gradlew build`에서 모듈별 ktlint와
   main/test compilation을 검사한다. 추가 Gradle 옵션이 필요 없다. 설치 전의 독립 실행은
   `./docs/lint/scripts/lint.sh kotlin`을 사용한다.
+- Android 앱·라이브러리는 같은 설치로 모든 활성 variant의 Android Lint와 Java/Kotlin
+  검사를 `check`/`build`에 연결한다. warning은 오류로 처리하고 baseline은 허용하지 않는다.
+  독립 실행은 `./docs/lint/scripts/lint.sh android` 또는 설치 후 `./gradlew lintAndroid`다.
 - `pnpm --dir frontend run build`: TypeScript 언어 gate다. Prettier, ESLint, `tsc -b`가 성공한 뒤에만 Vite build를
   실행한다.
 - Docker image build: source inventory, frontend, backend, Python lint stage가 모두 성공해야
@@ -129,6 +135,7 @@ formatter, lint, type check는 생략하지 않는다.
 | ktlint | `1.8.0` |
 | Palantir Java Format | `2.96.0` |
 | Error Prone Gradle / core | `5.1.0` / `2.50.0` |
+| Android Lint | 소비 프로젝트의 AGP 번들 사용 (`9.4.1` 검증) |
 | ESLint / typescript-eslint | lockfile의 `10.5.0` / `8.61.1` |
 | Prettier | `3.9.6` |
 | pnpm | `10.32.1` |
@@ -148,6 +155,7 @@ TS 7 native로 받는다. typescript-eslint가 아직 TS 7 API를 지원하지 �
 
 - [Java](java.md)
 - [Kotlin](kotlin.md)
+- [Android](android.md)
 - [TypeScript](typescript.md)
 - [Python](python.md)
 - [Rust](rust.md)
