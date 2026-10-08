@@ -58,6 +58,23 @@ Java SDK의 Palantir formatting과 `-Werror`, Python SDK의 strict Pyright도 �
 - [Clippy](https://doc.rust-lang.org/clippy/)
 - [Rust 1.97.1 release](https://blog.rust-lang.org/2026/07/16/Rust-1.97.1/)
 
+## Kotlin 공식 자료
+
+Kotlin 항목은 2026-10-08에 추가 확인했다.
+
+- [ktlint 1.8.0 release](https://github.com/ktlint/ktlint/releases/tag/1.8.0)
+- [ktlint code styles](https://ktlint.github.io/ktlint/latest/rules/code-styles/)
+- [Spotless Kotlin 설정](https://github.com/diffplug/spotless/tree/main/plugin-gradle#kotlin)
+- [Kotlin Gradle compiler options](https://kotlinlang.org/docs/gradle-compiler-options.html)
+- [Gradle init scripts](https://docs.gradle.org/current/userguide/init_scripts.html)
+- [Gradle script plugins](https://docs.gradle.org/current/userguide/plugins_intermediate.html)
+
+기존 Spotless를 재사용하고 ktlint의 공식 스타일을 적용한다. Kotlin compiler의
+`allWarningsAsErrors`를 활성화하며 compiler 버전과 target은 소비 프로젝트가 소유한다.
+설치 스크립트가 Gradle settings에 공통 정책을 연결하고 일반 빌드에서 모듈별로 적용한다.
+설치 전 CLI 검사에는 같은 정책을 init script로 불러온다. 수동 plugin 선언은 필요 없다.
+이 항목은 Kotlin·Gradle 도구의 공개 문서에 근거한 SENA 선택이다.
+
 ## 종합 판단
 
 frontier 회사마다 언어, 저장소 생성 방식, 공개 범위가 다르므로 하나의 설정을 복사하는 방식은

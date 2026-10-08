@@ -19,7 +19,7 @@ Usage: lint.sh [-t DIR] [-s FILE]... [LANG...]
             omitted: tracked and untracked *.py / *.pyi are collected
   -h        show this help
 
-  LANG      java | typescript | python | rust
+  LANG      java | kotlin | typescript | python | rust
             omitted: detected from the repository layout
 
 Run from anywhere inside the consuming Git repository.
@@ -49,7 +49,7 @@ shift $((OPTIND - 1))
 
 for lang in "$@"; do
     case "$lang" in
-        java | typescript | python | rust) LANGS+=("$lang") ;;
+        java | kotlin | typescript | python | rust) LANGS+=("$lang") ;;
         *) die "unknown language: $lang" ;;
     esac
 done
@@ -58,7 +58,10 @@ ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || die 'not inside a Git repos
 cd "$ROOT"
 
 if [ "${#LANGS[@]}" -eq 0 ]; then
-    if [ -x ./gradlew ]; then LANGS+=(java); fi
+    kotlin_sources=$(git ls-files --cached --others --exclude-standard '*.kt' '*.kts')
+    java_sources=$(git ls-files --cached --others --exclude-standard '*.java')
+    if [ -x ./gradlew ] && { [ -n "$java_sources" ] || [ -z "$kotlin_sources" ]; }; then LANGS+=(java); fi
+    if [ -n "$kotlin_sources" ]; then LANGS+=(kotlin); fi
     if [ -f "$TS_DIR/package.json" ]; then LANGS+=(typescript); fi
     if [ -n "$(git ls-files '*.py' | head -n 1)" ]; then LANGS+=(python); fi
     if [ -f Cargo.toml ]; then LANGS+=(rust); fi
@@ -72,6 +75,12 @@ lint_java() {
         return
     fi
     ./gradlew --console=plain lintJava
+}
+
+lint_kotlin() {
+    info 'Kotlin: Spotless + ktlint + compiler warnings as errors'
+    [ -x ./gradlew ] || die 'Kotlin requires an executable ./gradlew in the repository root'
+    ./gradlew --console=plain --init-script "$CONFIG_DIR/kotlin/lint.init.gradle" lintKotlin
 }
 
 lint_typescript() {
