@@ -1,0 +1,5 @@
+// Optional CLI entry point before install.sh has connected the settings adapter.
+def policy = new File(initscript.sourceFile.parentFile, 'lint.settings.gradle')
+gradle.settingsEvaluated { settings ->
+    settings.apply from: policy
+}

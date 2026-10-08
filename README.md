@@ -1,6 +1,6 @@
 # lint
 
-Java, Kotlin, TypeScript, Python, Rust 정적 검사 표준의 단일 원본 저장소.
+Java, Kotlin, Android, TypeScript, Python, Rust 정적 검사 표준의 단일 원본 저장소.
 
 각 프로젝트는 이 저장소를 Git submodule로 등록해서 `config/` 아래의 canonical 설정 파일을
 그대로 참조한다. 규칙을 프로젝트마다 복사해두지 않으므로, 표준이 바뀌면 submodule
@@ -8,21 +8,23 @@ Java, Kotlin, TypeScript, Python, Rust 정적 검사 표준의 단일 원본 저
 
 목표는 개발자가 언어별 lint 도구와 옵션을 직접 설정하지 않고도 평소의 개발 명령으로
 검사를 받는 것이다. 저장소에 처음 도입할 때 `install.sh`를 한 번 실행하고 연결 파일을
-커밋한다. Java/Kotlin 프로젝트에서는 이후 모든 개발자와 CI의 `./gradlew build`에 lint가
+커밋한다. Java/Kotlin 및 Android 프로젝트에서는 이후 모든 개발자와 CI의 `./gradlew build`에 lint가
 자동으로 포함된다.
 
 - 표준 정의: [standards.md](standards.md)
-- 언어별 문서: [Java](java.md) · [Kotlin](kotlin.md) · [TypeScript](typescript.md) · [Python](python.md) · [Rust](rust.md)
+- 언어별 문서: [Java](java.md) · [Kotlin](kotlin.md) · [Android](android.md) · [TypeScript](typescript.md) · [Python](python.md) · [Rust](rust.md)
 - 공개 근거: [sources.md](sources.md)
 
 ## 구성
 
 ```
 config/
-  gradle/lint.settings.gradle       # Java/Kotlin plugin 자동 준비 + 프로젝트별 정책 연결
+  gradle/lint.settings.gradle       # Java/Kotlin/Android plugin 감지 + 프로젝트별 정책 연결
+  gradle/lint.init.gradle           # 설치 전 CLI용 공통 진입점
+  android/lint.gradle              # 모든 Android variant의 Lint + Java/Kotlin gate
   java/lint.gradle                  # Spotless + Error Prone + javac 정책
   kotlin/lint.gradle                # Spotless + ktlint + Kotlin compiler gate
-  kotlin/lint.init.gradle           # 설치 전 CLI용 진입점
+  kotlin/lint.init.gradle           # 기존 Kotlin CLI 경로 호환용 진입점
   kotlin/.editorconfig             # Kotlin 스타일 설정
   typescript/eslint.config.mjs      # ESLint flat config factory
   typescript/prettier.json          # Prettier 설정
@@ -69,7 +71,7 @@ submodule을 등록한 뒤 소비 저장소의 루트에서 실행하면, 언어
 
 ```bash
 ./docs/lint/scripts/install.sh          # 무엇이 바뀌는지 먼저 보려면 -n
-# Java/Kotlin은 이후 평소 빌드 명령을 사용한다.
+# Java/Kotlin/Android는 이후 평소 빌드 명령을 사용한다.
 ./gradlew build
 ```
 
@@ -93,11 +95,13 @@ bash install.sh -u http://192.168.220.222:8089/ploonet/lint.git -p docs/lint
 | `-t DIR` | `frontend` | TypeScript adapter를 생성할 디렉터리 |
 | `-f` | off | 기존 adapter 파일 덮어쓰기 |
 | `-n` | off | dry-run. 실행할 작업만 출력 |
-| `LANG...` | 자동 감지 | `java kotlin typescript python rust` 중 선택 |
+| `LANG...` | 자동 감지 | `java kotlin android typescript python rust` 중 선택 |
 
 언어를 지정하지 않으면 `*.java`, `*.kt`/`*.kts`, `<target>/package.json`, `*.py`,
 `Cargo.toml`로 감지한다. Java/Kotlin은 Git의 tracked 및 ignore되지 않은 untracked 파일을
 확인한다. Kotlin 파일이 없는 Gradle 프로젝트는 기존처럼 Java로 감지한다.
+Android 앱·라이브러리는 공통 Gradle 설정이 실제 플러그인으로 구분하므로 version catalog의
+plugin alias도 지원한다. Java/Kotlin으로 자동 감지되어도 Android 정책이 함께 적용된다.
 
 first-party Rust 소스가 아직 없어도 toolchain을 미리 고정하려면 Rust를 명시한다. `Cargo.toml`이
 없으면 자동 감지에서 빠지기 때문이다.
@@ -140,6 +144,23 @@ git submodule add http://192.168.220.222:8089/ploonet/lint.git docs/lint
 JDK 17+, Gradle 8+, 컴파일용 Kotlin Gradle plugin 2.x가 필요하며, 첫 실행에 lint 도구를
 자동으로 받는다. Kotlin compiler와 JVM target은 소비 프로젝트의 설정을 유지한다.
 세부 규칙과 빌드 연결은 [kotlin.md](kotlin.md)에 있다.
+
+### Android
+
+`com.android.application`과 `com.android.library` 모듈에 Android Lint와 기존 Java/Kotlin
+정책을 함께 적용한다. Android Lint의 warning도 오류로 처리하며, 활성화된 모든 build type과
+product flavor를 검사한다. `lint.sh`의 Java/Kotlin 검사에서도 Android 검사가 빠지지 않는다.
+
+```bash
+./docs/lint/scripts/install.sh android   # 언어를 생략한 자동 설치도 가능
+./gradlew build
+./gradlew lintAndroid
+# 설치 전에도 독립적으로 실행 가능
+./docs/lint/scripts/lint.sh android
+```
+
+Java 검사에 JDK 21+가 필요하다. Android SDK, AGP, Kotlin 버전과 JVM target은 소비 프로젝트가
+정한다. AGP 9의 내장 Kotlin도 지원하며, 검사 범위와 검증 환경은 [android.md](android.md)에 있다.
 
 ### TypeScript
 

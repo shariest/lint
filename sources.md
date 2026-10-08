@@ -75,6 +75,24 @@ Kotlin 항목은 2026-10-08에 추가 확인했다.
 설치 전 CLI 검사에는 같은 정책을 init script로 불러온다. 수동 plugin 선언은 필요 없다.
 이 항목은 Kotlin·Gradle 도구의 공개 문서에 근거한 SENA 선택이다.
 
+## Android 공식 자료
+
+Android 항목은 2026-10-08에 추가 확인했다.
+
+- [Android Lint 실행과 검사 범위](https://developer.android.com/studio/write/lint)
+- [AGP Lint DSL](https://developer.android.com/reference/tools/gradle-api/9.4/com/android/build/api/dsl/Lint)
+- [AGP finalizeDsl / onVariants](https://developer.android.com/build/extend-agp)
+- [AGP 내장 Kotlin](https://developer.android.com/build/migrate-to-built-in-kotlin)
+- [ktlint의 Compose 함수 이름 설정](https://ktlint.github.io/ktlint/1.8.0/rules/standard/#function-naming)
+- [Error Prone Gradle plugin의 Android 연결](https://github.com/tbroyer/gradle-errorprone-plugin#android-gradle-plugin-support)
+
+Android Lint는 AGP 번들을 사용하고, warning 차단과 test source 검사는 canonical 정책에서
+정한다. `finalizeDsl`에서 옵션을 정하고 `onVariants`로 모든 활성 variant의 lint task를
+연결한다. Error Prone은 Android의 annotation processor configuration과 Java compile task에
+별도로 연결한다. 기존 Java/Kotlin 도구 버전과 규칙은 재사용한다.
+Android의 `@Composable` 함수는 Compose 관례에 따라 PascalCase를 허용하며, ktlint의 공식
+`ktlint_function_naming_ignore_when_annotated_with` 설정을 사용한다.
+
 ## 종합 판단
 
 frontier 회사마다 언어, 저장소 생성 방식, 공개 범위가 다르므로 하나의 설정을 복사하는 방식은

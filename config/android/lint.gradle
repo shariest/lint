@@ -1,0 +1,27 @@
+// Applied as soon as the Android application/library plugin is available.
+androidComponents.finalizeDsl { android ->
+    android.lint.abortOnError = true
+    android.lint.warningsAsErrors = true
+    android.lint.ignoreWarnings = false
+    android.lint.checkTestSources = true
+    android.lint.ignoreTestSources = false
+    if (android.lint.baseline != null) {
+        throw new GradleException('Android Lint baselines are not allowed by the shared lint policy.')
+    }
+}
+
+def languageGates = tasks.matching { it.name in ['lintJava', 'lintKotlin'] }
+def lint = tasks.register('lintAndroid') {
+    group = 'verification'
+    description = 'Checks Android Lint, Java and Kotlin for every enabled variant.'
+    dependsOn languageGates
+}
+
+androidComponents.onVariants(androidComponents.selector().all()) { variant ->
+    def variantLint = "lint${variant.name.capitalize()}"
+    lint.configure { dependsOn variantLint }
+    // Language-only CLI entry points must not omit Android-specific checks.
+    languageGates.configureEach { dependsOn variantLint }
+}
+
+tasks.matching { it.name == 'check' }.configureEach { dependsOn lint }

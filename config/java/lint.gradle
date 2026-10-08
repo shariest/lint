@@ -1,13 +1,21 @@
 // Canonical Java policy. Loaded by the settings adapter, or by existing builds
 // that bootstrap Spotless and Error Prone themselves.
+def isAndroid = plugins.hasPlugin('com.android.application') || plugins.hasPlugin('com.android.library')
 
 dependencies {
     errorprone 'com.google.errorprone:error_prone_core:2.50.0'
 }
 
+if (isAndroid) {
+    // AGP owns the processor path; extend its configurations without replacing existing processors.
+    configurations.matching { it.name == 'annotationProcessor' || it.name.endsWith('AnnotationProcessor') }.configureEach {
+        extendsFrom configurations.errorprone
+    }
+}
+
 spotless {
     java {
-        target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+        target isAndroid ? senaJavaSources : ['src/main/java/**/*.java', 'src/test/java/**/*.java']
         targetExclude 'src/main/generated/**', 'build/**'
         palantirJavaFormat('2.96.0')
         formatAnnotations()
@@ -16,7 +24,13 @@ spotless {
     }
 }
 
-tasks.withType(JavaCompile).configureEach {
+def compilations = tasks.withType(JavaCompile)
+compilations.configureEach {
+    if (isAndroid) {
+        options.errorprone.enabled = true
+        options.errorprone.compilingTestOnlyCode = name.endsWith('UnitTestJavaWithJavac') ||
+            name.endsWith('AndroidTestJavaWithJavac')
+    }
     options.encoding = 'UTF-8'
     options.errorprone.disableWarningsInGeneratedCode = true
     options.errorprone.excludedPaths = '.*/(?:build/generated|src/main/generated)/.*'
@@ -25,9 +39,6 @@ tasks.withType(JavaCompile).configureEach {
     // 동형이의 문자 혼동 위험보다 테스트 의도가 그대로 읽히는 이점이 크다.
     options.errorprone.disable('UnicodeInCode')
     options.compilerArgs.addAll(['-Xlint:all,-processing', '-Werror'])
-}
-
-tasks.named('compileJava') {
     dependsOn tasks.named('spotlessJavaCheck')
 }
 
@@ -35,8 +46,7 @@ tasks.register('lintJava') {
     group = 'verification'
     description = 'Checks first-party Java formatting and Error Prone findings.'
     dependsOn tasks.named('spotlessJavaCheck')
-    dependsOn tasks.named('compileJava')
-    dependsOn tasks.named('compileTestJava')
+    dependsOn compilations
 }
 
 tasks.named('check') {

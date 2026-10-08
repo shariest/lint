@@ -9,6 +9,9 @@ Error Prone과 javac `-Xlint`를 적용한다. compile 전에 formatter check가
 실행 규칙의 단일 원본은 `docs/lint/config/java/lint.gradle`이다. `install.sh`가 Gradle settings에
 `config/gradle/lint.settings.gradle`을 연결하고, 공통 설정이 각 Java 모듈의 plugin과 정책을
 자동으로 준비한다. 기존 build script에서 이 정책을 직접 적용하던 방식도 유지된다.
+Android 앱·라이브러리도 같은 규칙을 재사용한다. Android에서는 Git의 first-party Java 파일을
+포맷 검사하고, 모든 variant의 `JavaCompile`에 Error Prone을 연결한다. 기존 annotation
+processor는 유지한다. Android 전용 검사와 요구 환경은 [android.md](android.md)를 참고한다.
 
 ```text
 Spotless 8.8.0

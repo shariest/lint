@@ -18,6 +18,12 @@ dependencyResolutionManagement.repositories.mavenCentral()
 def policies = buildscript.sourceFile.parentFile.parentFile
 
 gradle.beforeProject { project ->
+    ['com.android.application', 'com.android.library'].each { plugin ->
+        project.pluginManager.withPlugin(plugin) {
+            // Android's DSL must be configured before AGP finalizes its variants.
+            project.apply from: new File(policies, 'android/lint.gradle')
+        }
+    }
     project.afterEvaluate {
         // A project owns its files, but not another Gradle project's directory.
         def nestedProjects = project.rootProject.allprojects.findAll {
@@ -32,9 +38,11 @@ gradle.beforeProject { project ->
                 !nestedProjects.any { directory -> project.file(it).toPath().startsWith(directory) }
         }
         def hasKotlin = project.extensions.findByName('kotlin') != null
+        def isAndroid = project.plugins.hasPlugin('com.android.application') ||
+            project.plugins.hasPlugin('com.android.library')
         def kotlinSources = sources.findAll { it.endsWith('.kt') || it.endsWith('.kts') }
-        def hasJava = project.plugins.hasPlugin('java') &&
-            (!hasKotlin || sources.any { it.endsWith('.java') })
+        def hasJava = isAndroid || (project.plugins.hasPlugin('java') &&
+            (!hasKotlin || sources.any { it.endsWith('.java') }))
 
         if (!hasJava && !hasKotlin && kotlinSources.empty) {
             return
@@ -45,6 +53,9 @@ gradle.beforeProject { project ->
             project.pluginManager.apply(rootPlugin?.class ?: com.diffplug.gradle.spotless.SpotlessPlugin)
         }
         if (hasJava && !project.tasks.names.contains('lintJava')) {
+            if (isAndroid) {
+                project.ext.senaJavaSources = project.files(sources.findAll { it.endsWith('.java') })
+            }
             if (!project.plugins.hasPlugin('net.ltgt.errorprone')) {
                 project.pluginManager.apply(net.ltgt.gradle.errorprone.ErrorPronePlugin)
             }

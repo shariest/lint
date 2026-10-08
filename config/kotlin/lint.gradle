@@ -5,10 +5,15 @@ if (kotlinExtension == null && senaKotlinSources.any { it.name.endsWith('.kt') }
 }
 
 def policyFile = new File(buildscript.sourceFile.parentFile, '.editorconfig')
+def isAndroid = plugins.hasPlugin('com.android.application') || plugins.hasPlugin('com.android.library')
 spotless {
     kotlin {
         target senaKotlinSources
-        ktlint('1.8.0').setEditorConfigPath(policyFile)
+        def formatter = ktlint('1.8.0').setEditorConfigPath(policyFile)
+        if (isAndroid) {
+            // Compose UI functions use PascalCase, unlike ordinary Kotlin functions.
+            formatter.editorConfigOverride(['ktlint_function_naming_ignore_when_annotated_with': 'Composable'])
+        }
         trimTrailingWhitespace()
         endWithNewline()
     }

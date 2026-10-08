@@ -23,7 +23,7 @@ Usage: install.sh [-p PATH] [-u URL] [-t DIR] [-f] [-n] [LANG...]
   -n        dry run; print actions only
   -h        show this help
 
-  LANG      java | kotlin | typescript | python | rust
+  LANG      java | kotlin | android | typescript | python | rust
             omitted: detected from the repository layout
 
 Run from the root of the consuming Git repository.
@@ -108,7 +108,7 @@ esac
 
 for lang in "$@"; do
     case "$lang" in
-        java | kotlin | typescript | python | rust) LANGS+=("$lang") ;;
+        java | kotlin | android | typescript | python | rust) LANGS+=("$lang") ;;
         *) die "unknown language: $lang" ;;
     esac
 done
@@ -171,6 +171,11 @@ install_java() {
 
 install_kotlin() {
     info 'kotlin'
+    install_gradle
+}
+
+install_android() {
+    info 'android'
     install_gradle
 }
 
