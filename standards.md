@@ -4,7 +4,7 @@
 
 조사 기준일: 2026-08-12
 
-이 디렉터리는 SENA가 직접 소유하고 수정하는 Java, TypeScript, Python, Rust 코드의
+이 디렉터리는 SENA가 직접 소유하고 수정하는 Java, Kotlin, TypeScript, Python, Rust 코드의
 정적 검사 표준을 정의한다. 공개된 Google 스타일 가이드와 OpenAI·Anthropic의 공식
 오픈 소스 저장소 설정을 참고하되, 각 회사의 비공개 사내 표준이라고 추정하지 않는다.
 SENA의 기존 구조, 런타임 버전, 코드 관례와 충돌하는 항목은 근거를 남기고 조정한다.
@@ -18,6 +18,8 @@ SENA의 기존 구조, 런타임 버전, 코드 관례와 충돌하는 항목은
 5. generated, vendored, upstream mirror는 lint 대신 생성 재현성 또는 원본 무결성을 검증한다.
 6. 자동 수정 명령은 개발자가 명시적으로 실행한다. CI와 빌드는 check만 실행한다.
 7. 규칙 억제는 가장 좁은 문장이나 선언에만 적용하고, 이유를 같은 위치에 기록한다.
+8. 개발자가 언어별 설정을 직접 작성하지 않도록 설치를 자동화한다. 새 언어 지원에는 자동 감지,
+   설치, 해당 생태계의 일반 개발 명령 연결과 실제 실행 검증을 함께 포함한다.
 
 ## 실행 설정의 단일 원본
 
@@ -27,7 +29,8 @@ Markdown 문서는 기준을 설명하고, 실제 도구가 읽는 설정은 모
 
 | 언어 | canonical 설정 | 프로젝트 연결 방식 |
 | --- | --- | --- |
-| Java | `config/java/lint.gradle` | 루트 `build.gradle`의 `apply from` |
+| Java | `config/java/lint.gradle` | `install.sh`가 Gradle settings에 공통 정책을 자동 연결. 기존 build script 연결도 지원 |
+| Kotlin | `config/kotlin/lint.gradle`, `.editorconfig` | 같은 Gradle settings 연결로 모듈마다 `check`/`build`에 자동 적용 |
 | TypeScript | `config/typescript/eslint.config.mjs`, `prettier.json` | 각 TS 프로젝트의 `eslint.config.js` dependency adapter(프론트엔드 factory / Node factory), `.prettierrc.cjs` IDE adapter, pnpm의 `--config` |
 | Python | `config/python/pyproject.toml`, `requirements.txt` | `scripts/lint.sh`와 Docker의 `--config`, `--config-file`, `-r` |
 | Rust | `config/rust/{rust-toolchain,rustfmt,clippy}.toml` | 루트의 같은 이름 파일이 canonical 파일을 가리키는 상대 symlink |
@@ -41,6 +44,7 @@ Markdown 문서는 기준을 설명하고, 실제 도구가 읽는 설정은 모
 | 언어 | 검사 대상 | 기본 예외 |
 | --- | --- | --- |
 | Java | `src/main/java/**`, `src/test/java/**` | `src/main/generated/**`, `build/**` |
+| Kotlin | Git tracked/untracked `*.kt`, `*.kts`; main/test 및 하위 프로젝트 compilation | Git submodule, ignore된 untracked 파일, `build`, `.gradle`, `.kotlin`, `node_modules`, `vendor`, `generated` 디렉터리 |
 | TypeScript | `frontend/src/**/*.{ts,tsx,mts,cts}`, `frontend/vite.config.ts` | `frontend/{node_modules,dist}/**` |
 | Python | `tool-runner/runner.py`, `tool-runner/tools/_example.py`, `docs/build_pptx.py`, `docs/build_architecture.py`, `src/main/resources/extension-bundle/bundle_server.py` | 런타임 생성 `tool-runner/tools/**` 중 `_example.py` 외 파일, cache/build 산출물 |
 | Rust | 앞으로 추가되는 first-party Cargo workspace의 추적 중인 `*.rs` | `modules/**`, `vendor/**`, `target/**`, generated 코드 |
@@ -76,6 +80,7 @@ Markdown 문서는 기준을 설명하고, 실제 도구가 읽는 설정은 모
 
 ```bash
 ./gradlew lintJava
+./docs/lint/scripts/lint.sh kotlin
 pnpm --dir frontend run lint
 ./.lint-venv/bin/ruff format --config docs/lint/config/python/pyproject.toml --check <sources>
 ./.lint-venv/bin/ruff check --config docs/lint/config/python/pyproject.toml <sources>
@@ -99,6 +104,9 @@ Rust first-party 소스가 아직 없으므로 Rust 검사는 현재 명시적�
 
 - `./gradlew build`: Java 언어 gate다. Spotless check 뒤 Java compile을 실행하고 Error Prone 및 javac warning을
   error로 처리한다.
+- Kotlin은 `install.sh`로 한 번 연결하면 일반 `./gradlew build`에서 모듈별 ktlint와
+  main/test compilation을 검사한다. 추가 Gradle 옵션이 필요 없다. 설치 전의 독립 실행은
+  `./docs/lint/scripts/lint.sh kotlin`을 사용한다.
 - `pnpm --dir frontend run build`: TypeScript 언어 gate다. Prettier, ESLint, `tsc -b`가 성공한 뒤에만 Vite build를
   실행한다.
 - Docker image build: source inventory, frontend, backend, Python lint stage가 모두 성공해야
@@ -118,6 +126,7 @@ formatter, lint, type check는 생략하지 않는다.
 | 영역 | 고정 버전 |
 | --- | --- |
 | Spotless Gradle | `8.8.0` |
+| ktlint | `1.8.0` |
 | Palantir Java Format | `2.96.0` |
 | Error Prone Gradle / core | `5.1.0` / `2.50.0` |
 | ESLint / typescript-eslint | lockfile의 `10.5.0` / `8.61.1` |
@@ -138,6 +147,7 @@ TS 7 native로 받는다. typescript-eslint가 아직 TS 7 API를 지원하지 �
 ## 세부 문서
 
 - [Java](java.md)
+- [Kotlin](kotlin.md)
 - [TypeScript](typescript.md)
 - [Python](python.md)
 - [Rust](rust.md)

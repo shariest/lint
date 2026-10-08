@@ -23,7 +23,7 @@ Usage: install.sh [-p PATH] [-u URL] [-t DIR] [-f] [-n] [LANG...]
   -n        dry run; print actions only
   -h        show this help
 
-  LANG      java | typescript | python | rust
+  LANG      java | kotlin | typescript | python | rust
             omitted: detected from the repository layout
 
 Run from the root of the consuming Git repository.
@@ -99,9 +99,16 @@ while getopts ':p:u:t:fnh' opt; do
 done
 shift $((OPTIND - 1))
 
+# The path is embedded in Gradle and JavaScript string literals below.
+case "$SUB_PATH" in
+    '' | /* | .. | ../* | */../* | */.. | *\"* | *\'* | *'$'* | *\\* | *$'\n'* | *$'\r'*)
+        die 'submodule path must be relative and contain no quotes, backslashes, dollar signs or newlines'
+        ;;
+esac
+
 for lang in "$@"; do
     case "$lang" in
-        java | typescript | python | rust) LANGS+=("$lang") ;;
+        java | kotlin | typescript | python | rust) LANGS+=("$lang") ;;
         *) die "unknown language: $lang" ;;
     esac
 done
@@ -111,7 +118,10 @@ ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || die 'not inside a Git repos
 cd "$ROOT"
 
 if [ "${#LANGS[@]}" -eq 0 ]; then
-    if [ -f build.gradle ] || [ -f build.gradle.kts ]; then LANGS+=(java); fi
+    kotlin_sources=$(git ls-files --cached --others --exclude-standard '*.kt' '*.kts')
+    java_sources=$(git ls-files --cached --others --exclude-standard '*.java')
+    if { [ -x ./gradlew ] || [ -f build.gradle ] || [ -f build.gradle.kts ]; } && { [ -n "$java_sources" ] || [ -z "$kotlin_sources" ]; }; then LANGS+=(java); fi
+    if [ -n "$kotlin_sources" ]; then LANGS+=(kotlin); fi
     if [ -f "$TS_DIR/package.json" ]; then LANGS+=(typescript); fi
     if [ -n "$(git ls-files '*.py' | head -n 1)" ]; then LANGS+=(python); fi
     if [ -f Cargo.toml ]; then LANGS+=(rust); fi
@@ -130,31 +140,38 @@ else
     run git submodule update --init --recursive "$SUB_PATH"
 fi
 
+install_gradle() {
+    [ -x ./gradlew ] || die 'Gradle lint requires an executable ./gradlew in the repository root'
+    local marker="$SUB_PATH/config/gradle/lint.settings.gradle"
+    local settings_file=settings.gradle line
+    if [ ! -f settings.gradle ] && { [ -f settings.gradle.kts ] || [ -f build.gradle.kts ]; }; then
+        settings_file=settings.gradle.kts
+    fi
+    if [ "$settings_file" = settings.gradle.kts ]; then
+        line="apply(from = \"\$rootDir/$marker\")"
+    else
+        line="apply from: \"\$rootDir/$marker\""
+    fi
+    if [ -f "$settings_file" ] && grep -qxF "$line" "$settings_file"; then
+        ok "$settings_file already applies the canonical policy"
+        return
+    fi
+    if [ "$DRY" -eq 1 ]; then
+        ok "[dry-run] append to $settings_file: $line"
+    else
+        printf '\n// Shared lint policy; installed by %s/scripts/install.sh\n%s\n' "$SUB_PATH" "$line" >>"$settings_file"
+        ok "wired $settings_file; ./gradlew build now includes lint"
+    fi
+}
+
 install_java() {
     info 'java'
-    local marker="$SUB_PATH/config/java/lint.gradle"
-    local gradle_file=''
-    if [ -f build.gradle ]; then gradle_file=build.gradle; fi
-    if [ -f build.gradle.kts ]; then gradle_file=build.gradle.kts; fi
-    if [ -z "$gradle_file" ]; then
-        warn 'no build.gradle found; skipping'
-        return
-    fi
-    if grep -qF "$marker" "$gradle_file"; then
-        ok "$gradle_file already applies the canonical policy"
-        return
-    fi
-    warn "$gradle_file is not wired; add the following manually"
-    cat <<EOF
+    install_gradle
+}
 
-    plugins {
-        id 'com.diffplug.spotless' version '8.8.0'
-        id 'net.ltgt.errorprone' version '5.1.0'
-    }
-
-    apply from: "\$rootDir/$marker"
-
-EOF
+install_kotlin() {
+    info 'kotlin'
+    install_gradle
 }
 
 install_typescript() {
@@ -273,5 +290,5 @@ cat <<EOF
 
 Next:
   ./$SUB_PATH/scripts/lint.sh
-  git add .gitmodules $SUB_PATH && git commit -m "chore: adopt lint standard"
+  Commit .gitmodules, $SUB_PATH and the generated/updated adapter files.
 EOF

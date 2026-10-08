@@ -1,5 +1,5 @@
-// Canonical Java lint policy. The root build.gradle only bootstraps the
-// Spotless and Error Prone plugins, then applies this file.
+// Canonical Java policy. Loaded by the settings adapter, or by existing builds
+// that bootstrap Spotless and Error Prone themselves.
 
 dependencies {
     errorprone 'com.google.errorprone:error_prone_core:2.50.0'

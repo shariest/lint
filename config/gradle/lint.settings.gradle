@@ -1,0 +1,58 @@
+// Installed once in settings.gradle(.kts); applies to normal Gradle/IDE builds.
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:8.8.0'
+        classpath 'net.ltgt.gradle:gradle-errorprone-plugin:5.1.0'
+    }
+}
+
+if (extensions.extraProperties.has('senaLintConfigured')) {
+    return
+}
+extensions.extraProperties.set('senaLintConfigured', true)
+dependencyResolutionManagement.repositories.mavenCentral()
+def policies = buildscript.sourceFile.parentFile.parentFile
+
+gradle.beforeProject { project ->
+    project.afterEvaluate {
+        // A project owns its files, but not another Gradle project's directory.
+        def nestedProjects = project.rootProject.allprojects.findAll {
+            it != project && it.projectDir.toPath().startsWith(project.projectDir.toPath())
+        }.collect { it.projectDir.toPath() }
+        def sources = project.providers.exec {
+            workingDir project.projectDir
+            commandLine 'git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard', '*.java', '*.kt', '*.kts'
+        }.standardOutput.asText.get().split('\u0000').findAll {
+            it && project.file(it).isFile() &&
+                !(it =~ /(^|\/)(build|\.gradle|\.kotlin|node_modules|vendor|generated)\//) &&
+                !nestedProjects.any { directory -> project.file(it).toPath().startsWith(directory) }
+        }
+        def hasKotlin = project.extensions.findByName('kotlin') != null
+        def kotlinSources = sources.findAll { it.endsWith('.kt') || it.endsWith('.kts') }
+        def hasJava = project.plugins.hasPlugin('java') &&
+            (!hasKotlin || sources.any { it.endsWith('.java') })
+
+        if (!hasJava && !hasKotlin && kotlinSources.empty) {
+            return
+        }
+        if (!project.plugins.hasPlugin('com.diffplug.spotless')) {
+            // Spotless shares a build service, so children must use the root's plugin classloader.
+            def rootPlugin = project.rootProject.plugins.findPlugin('com.diffplug.spotless')
+            project.pluginManager.apply(rootPlugin?.class ?: com.diffplug.gradle.spotless.SpotlessPlugin)
+        }
+        if (hasJava && !project.tasks.names.contains('lintJava')) {
+            if (!project.plugins.hasPlugin('net.ltgt.errorprone')) {
+                project.pluginManager.apply(net.ltgt.gradle.errorprone.ErrorPronePlugin)
+            }
+            project.apply from: new File(policies, 'java/lint.gradle')
+        }
+        if (hasKotlin || !kotlinSources.empty) {
+            project.ext.senaKotlinSources = project.files(kotlinSources)
+            project.apply from: new File(policies, 'kotlin/lint.gradle')
+        }
+    }
+}

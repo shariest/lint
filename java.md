@@ -6,8 +6,9 @@ Java 25 코드는 Spotless로 Palantir Java Format을 검사하고, 모든 `Java
 Error Prone과 javac `-Xlint`를 적용한다. compile 전에 formatter check가 실행되며 warning도
 `-Werror`로 빌드를 실패시킨다.
 
-실행 규칙의 단일 원본은 `docs/lint/config/java/lint.gradle`이다. 루트 `build.gradle`은
-Gradle plugin 버전만 bootstrap하고 이 파일을 `apply from`으로 불러온다.
+실행 규칙의 단일 원본은 `docs/lint/config/java/lint.gradle`이다. `install.sh`가 Gradle settings에
+`config/gradle/lint.settings.gradle`을 연결하고, 공통 설정이 각 Java 모듈의 plugin과 정책을
+자동으로 준비한다. 기존 build script에서 이 정책을 직접 적용하던 방식도 유지된다.
 
 ```text
 Spotless 8.8.0
@@ -43,6 +44,7 @@ warning만 `-Xlint:-processing`으로 제외한다. generated 경로는 Error Pr
 ## 사용법
 
 ```bash
+./docs/lint/scripts/install.sh  # 저장소에 처음 도입할 때 한 번 실행
 ./gradlew lintJava
 ./gradlew spotlessJavaApply
 ./gradlew build

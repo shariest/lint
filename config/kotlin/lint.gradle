@@ -1,0 +1,38 @@
+// Canonical per-project policy, loaded by the shared Gradle settings adapter.
+def kotlinExtension = extensions.findByName('kotlin')
+if (kotlinExtension == null && senaKotlinSources.any { it.name.endsWith('.kt') }) {
+    throw new GradleException('Kotlin sources found, but no Kotlin Gradle plugin is applied in this project.')
+}
+
+def policyFile = new File(buildscript.sourceFile.parentFile, '.editorconfig')
+spotless {
+    kotlin {
+        target senaKotlinSources
+        ktlint('1.8.0').setEditorConfigPath(policyFile)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+def formatCheck = tasks.named('spotlessKotlinCheck')
+def lint = tasks.register('lintKotlin') {
+    group = 'verification'
+    description = 'Checks Kotlin formatting and compilation, including tests.'
+    dependsOn formatCheck
+}
+
+if (kotlinExtension != null) {
+    // Use the consumer's compiler API without changing its Kotlin version or target.
+    def compilationType = kotlinExtension.class.classLoader.loadClass('org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask')
+    def compilations = tasks.withType(compilationType)
+    compilations.configureEach {
+        compilerOptions.allWarningsAsErrors.set(true)
+        compilerOptions.suppressWarnings.set(false)
+        dependsOn formatCheck
+    }
+    lint.configure { dependsOn compilations }
+}
+
+// Aggregator projects with only Kotlin DSL also get the usual build/check tasks.
+pluginManager.apply('base')
+tasks.named('check') { dependsOn lint }
